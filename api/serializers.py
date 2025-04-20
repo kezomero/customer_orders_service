@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import Customer, Order
+import phonenumbers
+from phonenumbers.phonenumberutil import NumberParseException
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,13 +13,22 @@ class CustomerSerializer(serializers.ModelSerializer):
         }
 
     def validate_phone(self, value):
-        if value.startswith('07'):
-            return '+254' + value[1:]
-        elif value.startswith('254'):
-            return '+' + value
-        elif value.startswith('+254'):
-            return value
-        raise serializers.ValidationError("Phone number must be a valid Kenyan number.")
+        try:
+            # Parse the phone number using phonenumbers library
+            phone_number = phonenumbers.parse(value)
+
+            # Check if the number is valid
+            if not phonenumbers.is_valid_number(phone_number):
+                raise serializers.ValidationError("Phone number is not valid.")
+
+            # Format the phone number in E.164 format (e.g., +254712345678)
+            formatted_phone = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
+            return formatted_phone
+
+        except NumberParseException:
+            raise serializers.ValidationError("Phone number must be a valid international number.")
+        except Exception as e:
+            raise serializers.ValidationError(str(e))
 
 
 class OrderSerializer(serializers.ModelSerializer):
