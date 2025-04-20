@@ -1,0 +1,28 @@
+# Ignore virtual environment folder
+venv/
+
+# Ignore environment variables file
+.env
+
+# Ignore Python bytecode files
+*.pyc
+__pycache__/
+
+# Ignore SQLite database files
+*.sqlite3
+db.sqlite3
+
+# Ignore log files
+*.log
+
+# Ignore coverage files
+.coverage
+htmlcov/
+
+# Ignore media and static folders
+/media
+/static
+
+# Ignore migrations
+**/migrations/*
+!**/migrations/__init__.py  # Keep the __init__.py file (to mark migration folders as Python packages)
