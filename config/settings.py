@@ -96,7 +96,7 @@ SIMPLE_JWT = {
 OIDC_AUDIENCE = os.getenv('OIDC_AUDIENCE')
 OIDC_ISSUER = os.getenv('OIDC_ISSUER')
 OIDC_JWKS_URL = os.getenv('OIDC_JWKS_URL')
-OIDC_PUBLIC_KEY = os.getenv('OIDC_PUBLIC_KEY')  # Optional if not using JWKS fetch
+OIDC_PUBLIC_KEY = os.getenv('OIDC_PUBLIC_KEY')
 
 # Africa's Talking Configuration
 africastalking.initialize(
