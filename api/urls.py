@@ -7,5 +7,5 @@ router.register(r'customers', CustomerViewSet)
 router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),  # exposes /customers/, /orders/
+    path('', include(router.urls)),
 ]
