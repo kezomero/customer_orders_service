@@ -14,14 +14,14 @@ class CustomerSerializer(serializers.ModelSerializer):
 
     def validate_phone(self, value):
         try:
-            # Parse the phone number using phonenumbers library
+            # Parse the phone number using the phonenumbers library
             phone_number = phonenumbers.parse(value)
 
             # Check if the number is valid
             if not phonenumbers.is_valid_number(phone_number):
                 raise serializers.ValidationError("Phone number is not valid.")
 
-            # Format the phone number in E.164 format (e.g., +254712345678)
+            # Format the phone number in E.164 format (e.g., +254712345678 or +1XXX5551234)
             formatted_phone = phonenumbers.format_number(phone_number, phonenumbers.PhoneNumberFormat.E164)
             return formatted_phone
 
