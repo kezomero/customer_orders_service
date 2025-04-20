@@ -1,19 +1,17 @@
 from django.db import models
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import MinValueValidator
 from decimal import Decimal
-
-phone_validator = RegexValidator(
-    regex=r'^(\+?254|0)?\d{9}$',
-    message='Enter a valid Kenyan phone number starting with 0 or +254.'
-)
 
 class Customer(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=20, unique=True)
     email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=15, validators=[phone_validator])
+    phone = models.CharField(max_length=15)
     location = models.CharField(max_length=100, blank=True, null=True)
     joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'customers'  # Custom table name
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -30,6 +28,9 @@ class Order(models.Model):
     )
     payment_method = models.CharField(max_length=50, default="M-Pesa")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'orders'  # Custom table name
 
     def __str__(self):
         return f"Order #{self.id} - {self.item} x{self.quantity}"
