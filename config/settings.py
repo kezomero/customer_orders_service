@@ -86,13 +86,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-        # 'oidc_auth.authentication.BearerTokenAuthentication',  # optional if using OIDC
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests
-    )
+        'rest_framework.permissions.IsAuthenticated',
+        #'rest_framework.permissions.AllowAny',  # Allow unauthenticated requests
+    ),
 }
 
 
@@ -114,3 +113,35 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'mozilla_django_oidc.auth.OIDCAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
+# OIDC Configuration
+OIDC_RP_CLIENT_ID = 'pNWvYdK7EX2ub1CD40Db9tdpipuLCHmn'
+OIDC_RP_CLIENT_SECRET = 'aTgUHg00WaFTc9nMekvG0hAgAcA3y6bCFhZ6egRIok2p8MzSGojiHZIAuUww_y93'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/authorize'
+OIDC_OP_TOKEN_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/oauth/token'
+OIDC_OP_USER_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/userinfo'
+OIDC_OP_LOGOUT_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/v2/logout'
+OIDC_OP_JWKS_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/.well-known/jwks.json'
+OIDC_RP_SIGN_ALGO = 'RS256'
+
+# OIDC callback URL
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+OIDC_AUTHENTICATION_CALLBACK_URL_NAME = 'oidc_authentication_callback'
+
+# Session management
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Better for OIDC flow
+SESSION_COOKIE_NAME = 'customers_orders_sessionid'
+SESSION_COOKIE_SAMESITE = 'Lax'  # Required for cross-domain OIDC flow
+CSRF_COOKIE_SAMESITE = 'Lax'
+OIDC_STATE_STORE = True  # Explicitly enable state storage
+OIDC_STORE_ACCESS_TOKEN = True  # Required for proper state handling
+OIDC_STORE_ID_TOKEN = True  # Required for JWT validation
+OIDC_RP_SCOPES = 'openid profile email'  # Add required scopes
