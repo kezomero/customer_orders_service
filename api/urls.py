@@ -8,4 +8,8 @@ router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('api/', include(router.urls)),
+    path('oidc/login/', CustomLoginView.as_view(), name='oidc-login'),
+    path('oidc/callback/', CustomOIDCAuthenticationCallbackView.as_view(), 
+         name='oidc_authentication_callback'),
 ]
