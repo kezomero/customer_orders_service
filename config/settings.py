@@ -122,8 +122,9 @@ AUTHENTICATION_BACKENDS = [
 
 
 # OIDC Configuration
-OIDC_RP_CLIENT_ID = 'pNWvYdK7EX2ub1CD40Db9tdpipuLCHmn'
-OIDC_RP_CLIENT_SECRET = 'aTgUHg00WaFTc9nMekvG0hAgAcA3y6bCFhZ6egRIok2p8MzSGojiHZIAuUww_y93'
+OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID')
+OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET')
+OIDC_DOMAIN= os.getenv('OIDC_DOMAIN')
 OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/authorize'
 OIDC_OP_TOKEN_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/oauth/token'
 OIDC_OP_USER_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/userinfo'
