@@ -2,9 +2,15 @@ from rest_framework import viewsets
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
-import logging
-
-logger = logging.getLogger(__name__)
+from django.shortcuts import redirect
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.urls import reverse
+from django.http import JsonResponse
 
 # OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
@@ -58,11 +64,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             f"We’ll contact you shortly."
         )
 
-        logger.debug(f"Prepared SMS: {message}")
+        print(f"Prepared SMS: {message}")
 
         success = SMSService.send_order_notification(customer.phone, message)
 
         if success:
-            logger.info(f"SMS sent successfully for Order #{order.id}")
+            print(f"SMS sent successfully for Order #{order.id}")
         else:
             logger.error(f"Failed to send SMS for Order #{order.id}")
