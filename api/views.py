@@ -6,6 +6,37 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# OIDC Callback View - Customizing token generation on successful login
+class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
+    def get(self, request, *args, **kwargs):
+        # Perform the default OIDC callback behavior
+        response = super().get(request, *args, **kwargs)
+
+        # Log the user details after authentication
+        user = request.user
+        
+        # Assuming user name is composed of first and last name
+        # You can also log a custom 'code_id' if you have this field in your user model
+        code_id = getattr(user, 'code_id', 'No code id available')  # Default value if code_id doesn't exist
+
+        # Generate the tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+        
+        # Return the tokens in the response
+        return JsonResponse({
+            'access_token': str(access_token),
+            'refresh_token': str(refresh),
+        })
+
+# Custom Login View to initiate OIDC authentication and redirect to the callback URL
+class CustomLoginView(OIDCAuthenticationRequestView):
+    def get(self, request, *args, **kwargs):
+        # Corrected the reverse URL name
+        self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
+        return super().get(request, *args, **kwargs)
+
+
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
