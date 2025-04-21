@@ -71,4 +71,4 @@ class OrderViewSet(viewsets.ModelViewSet):
         if success:
             print(f"SMS sent successfully for Order #{order.id}")
         else:
-            logger.error(f"Failed to send SMS for Order #{order.id}")
+            print(f"Failed to send SMS for Order #{order.id}")
