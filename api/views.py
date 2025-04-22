@@ -15,16 +15,12 @@ from django.http import JsonResponse
 # OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
     def get(self, request, *args, **kwargs):
-        # Perform the default OIDC callback behavior
         response = super().get(request, *args, **kwargs)
 
-        # Log the user details after authentication
         user = request.user
         
-        # Assuming user name is composed of first and last name
-        # You can also log a custom 'code_id' if you have this field in your user model
-        code_id = getattr(user, 'code_id', 'No code id available')  # Default value if code_id doesn't exist
-
+        code_id = getattr(user, 'code_id', 'No code id available') 
+        
         # Generate the tokens
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
@@ -38,7 +34,6 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
 # Custom Login View to initiate OIDC authentication and redirect to the callback URL
 class CustomLoginView(OIDCAuthenticationRequestView):
     def get(self, request, *args, **kwargs):
-        # Corrected the reverse URL name
         self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
         return super().get(request, *args, **kwargs)
 

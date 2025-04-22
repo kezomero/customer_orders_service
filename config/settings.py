@@ -60,7 +60,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': os.getenv('DB_ENGINE'),
         'NAME': os.getenv('DB_NAME'),
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
@@ -122,13 +122,14 @@ AUTHENTICATION_BACKENDS = [
 
 
 # OIDC Configuration
-OIDC_RP_CLIENT_ID = 'pNWvYdK7EX2ub1CD40Db9tdpipuLCHmn'
-OIDC_RP_CLIENT_SECRET = 'aTgUHg00WaFTc9nMekvG0hAgAcA3y6bCFhZ6egRIok2p8MzSGojiHZIAuUww_y93'
-OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/authorize'
-OIDC_OP_TOKEN_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/oauth/token'
-OIDC_OP_USER_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/userinfo'
-OIDC_OP_LOGOUT_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/v2/logout'
-OIDC_OP_JWKS_ENDPOINT = 'https://dev-t6aqyh1m4i5xfekr.us.auth0.com/.well-known/jwks.json'
+OIDC_RP_CLIENT_ID = os.getenv('OIDC_RP_CLIENT_ID')
+OIDC_RP_CLIENT_SECRET = os.getenv('OIDC_RP_CLIENT_SECRET')
+OIDC_DOMAIN= os.getenv('OIDC_DOMAIN')
+OIDC_OP_AUTHORIZATION_ENDPOINT = f'https://{OIDC_DOMAIN}/authorize'
+OIDC_OP_TOKEN_ENDPOINT = f'https://{OIDC_DOMAIN}/oauth/token'
+OIDC_OP_USER_ENDPOINT = f'https://{OIDC_DOMAIN}/userinfo'
+OIDC_OP_LOGOUT_ENDPOINT = f'https://{OIDC_DOMAIN}/v2/logout'
+OIDC_OP_JWKS_ENDPOINT = f'https://{OIDC_DOMAIN}/.well-known/jwks.json'
 OIDC_RP_SIGN_ALGO = 'RS256'
 
 # OIDC callback URL
@@ -144,4 +145,4 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 OIDC_STATE_STORE = True  # Explicitly enable state storage
 OIDC_STORE_ACCESS_TOKEN = True  # Required for proper state handling
 OIDC_STORE_ID_TOKEN = True  # Required for JWT validation
-OIDC_RP_SCOPES = 'openid profile email'  # Add required scopes
+OIDC_RP_SCOPES = 'openid profile email'  # Required scopes
