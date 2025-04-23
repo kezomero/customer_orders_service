@@ -14,6 +14,9 @@ class CustomerTests(APITestCase):
             'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
+        # Force authentication for customer tests if necessary
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_authenticate(user=self.user)
 
     def test_create_customer(self):
         response = self.client.post(self.url, self.customer_data)
