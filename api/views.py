@@ -1,43 +1,47 @@
 from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
-from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
-from django.http import JsonResponse
-from django.urls import reverse
-
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
+from django.shortcuts import redirect
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.urls import reverse
+from django.http import JsonResponse
 
-
-# Custom OIDC Callback View
+# OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
+
         user = request.user
+        
+        code_id = getattr(user, 'code_id', 'No code id available') 
+        
+        # Generate the tokens
         refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+        
+        # Return the tokens in the response
         return JsonResponse({
-            'access_token': str(refresh.access_token),
-            'refresh_token': str(refresh)
+            'access_token': str(access_token),
+            'refresh_token': str(refresh),
         })
 
-
-# Custom OIDC Login View
+# Custom Login View to initiate OIDC authentication and redirect to the callback URL
 class CustomLoginView(OIDCAuthenticationRequestView):
     def get(self, request, *args, **kwargs):
         self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
         return super().get(request, *args, **kwargs)
 
 
-# ViewSet for Customers
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
-
-# ViewSet for Orders with SMS notification
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -56,6 +60,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
 
         print(f"Prepared SMS: {message}")
+
         success = SMSService.send_order_notification(customer.phone, message)
 
         if success:
