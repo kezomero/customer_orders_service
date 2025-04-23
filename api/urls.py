@@ -13,6 +13,8 @@ router.register(r'customers', CustomerViewSet)
 router.register(r'orders', OrderViewSet)
 
 urlpatterns = [
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('', include(router.urls)),
     path('api/', include(router.urls)),
     path('oidc/login/', CustomLoginView.as_view(), name='oidc-login'),
