@@ -14,6 +14,9 @@ class CustomerTests(APITestCase):
             'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
+        # Force authentication for customer tests if necessary
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_authenticate(user=self.user)
 
     def test_create_customer(self):
         response = self.client.post(self.url, self.customer_data)
@@ -80,7 +83,7 @@ class SMSServiceTests(TestCase):
             self.assertEqual(formatted, expected)
 
 class AuthenticationTests(APITestCase):
-    @patch('mozilla_django_oidc.views.OIDCAuthenticationCallbackView.get_token')
+    @patch('mozilla_django_oidc.views.OIDCAuthenticationCallbackView.as_view()') 
     def test_oidc_callback(self, mock_token):
         mock_token.return_value = {'access_token': 'test'}
         url = reverse('oidc_authentication_callback')
