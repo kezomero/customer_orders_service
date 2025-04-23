@@ -83,7 +83,7 @@ class SMSServiceTests(TestCase):
             self.assertEqual(formatted, expected)
 
 class AuthenticationTests(APITestCase):
-    @patch('mozilla_django_oidc.views.OIDCAuthenticationCallbackView.some_method')  # Adjust 'some_method' to the actual method name
+    @patch('mozilla_django_oidc.views.OIDCAuthenticationCallbackView.as_view()') 
     def test_oidc_callback(self, mock_token):
         mock_token.return_value = {'access_token': 'test'}
         url = reverse('oidc_authentication_callback')
