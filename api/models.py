@@ -31,6 +31,11 @@ class Order(models.Model):
 
     class Meta:
         db_table = 'orders'  # Custom table name
+        
+    @property
+    def total_cost(self):
+        return self.quantity * self.amount
 
     def __str__(self):
         return f"Order #{self.id} - {self.item} x{self.quantity}"
+    
