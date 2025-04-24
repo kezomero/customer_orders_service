@@ -65,7 +65,7 @@ class OrderTests(APITestCase):
         self.assertEqual(order.total_cost, 300)
 
 class SMSServiceTests(TestCase):
-    @patch('africastalking.SMS.send', create=True)  # Fix: Add create=True
+    @patch('africastalking.SMS.send', create=True) 
     def test_send_sms_success(self, mock_send):
         mock_send.return_value = {
             'SMSMessageData': {
