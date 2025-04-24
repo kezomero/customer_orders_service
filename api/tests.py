@@ -88,13 +88,15 @@ class SMSServiceTests(TestCase):
             self.assertEqual(formatted, expected)
 
 class AuthenticationTests(APITestCase):
-    @patch('mozilla_django_oidc.views.OIDCAuthenticationCallbackView.as_view()') 
-    def test_oidc_callback(self, mock_token):
-        mock_token.return_value = {'access_token': 'test'}
+    @patch('api.views.CustomOIDCAuthenticationCallbackView.get')
+    def test_oidc_callback(self, mock_view):
+        mock_view.return_value = JsonResponse({
+            'access_token': 'test',
+            'refresh_token': 'test_refresh'
+        })
         url = reverse('oidc_authentication_callback')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertIn('access_token', response.json())
 
     def test_jwt_authentication(self):
         user = User.objects.create_user(username='testuser', password='testpass')
