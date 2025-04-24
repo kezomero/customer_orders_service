@@ -10,6 +10,7 @@ class CustomerTests(APITestCase):
     def setUp(self):
         self.customer_data = {
             'name': 'Test Customer',
+            'code': 'TEST123',  # Add required field
             'email': 'test@example.com',
             'phone': '+254712345678'
         }
