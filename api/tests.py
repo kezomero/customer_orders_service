@@ -41,7 +41,8 @@ class OrderTests(APITestCase):
             'customer': self.customer.id,
             'item': 'Test Item',
             'amount': 100,
-            'quantity': 2
+            'quantity': 2,
+            'payment_method': 'M-Pesa'  # Add required field
         }
         self.url = reverse('order-list')
         self.user = User.objects.create_user(username='testuser', password='testpass')
