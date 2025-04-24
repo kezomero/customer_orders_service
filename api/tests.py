@@ -11,12 +11,11 @@ class CustomerTests(APITestCase):
     def setUp(self):
         self.customer_data = {
             'name': 'Test Customer',
-            'code': 'TEST123', 
+            'code': 'TEST123',
             'email': 'test@example.com',
-            'phone': '+254742482543'
+            'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
-        # Force authentication for customer tests
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
 
@@ -36,14 +35,14 @@ class OrderTests(APITestCase):
         self.customer = Customer.objects.create(
             name='Test Customer',
             email='test@example.com',
-            phone='+254712345678'
+            phone='+254742482543'
         )
         self.order_data = {
             'customer': self.customer.id,
             'item': 'Test Item',
             'amount': 100,
             'quantity': 2,
-            'payment_method': 'M-Pesa' 
+            'payment_method': 'M-Pesa'
         }
         self.url = reverse('order-list')
         self.user = User.objects.create_user(username='testuser', password='testpass')
@@ -66,7 +65,7 @@ class OrderTests(APITestCase):
         self.assertEqual(order.total_cost, 300)
 
 class SMSServiceTests(TestCase):
-    @patch('africastalking.SMS.send')
+    @patch('africastalking.SMS.send', create=True)  # Fix: Add create=True
     def test_send_sms_success(self, mock_send):
         mock_send.return_value = {
             'SMSMessageData': {
@@ -99,10 +98,11 @@ class AuthenticationTests(APITestCase):
         url = reverse('oidc_authentication_callback')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+        self.assertIn('access_token', response.json())
 
     def test_jwt_authentication(self):
         user = User.objects.create_user(username='testuser', password='testpass')
         url = reverse('token_obtain_pair')
         response = self.client.post(url, {'username': 'testuser', 'password': 'testpass'})
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
