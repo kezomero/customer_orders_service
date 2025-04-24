@@ -10,12 +10,12 @@ class CustomerTests(APITestCase):
     def setUp(self):
         self.customer_data = {
             'name': 'Test Customer',
-            'code': 'TEST123',  # Add required field
+            'code': 'TEST123', 
             'email': 'test@example.com',
             'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
-        # Force authentication for customer tests if necessary
+        # Force authentication 
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
 
