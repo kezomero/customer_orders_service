@@ -5,6 +5,7 @@ from rest_framework import status
 from .models import Customer, Order
 from unittest.mock import patch
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 
 class CustomerTests(APITestCase):
     def setUp(self):
