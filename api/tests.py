@@ -15,7 +15,7 @@ class CustomerTests(APITestCase):
             'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
-        # Force authentication 
+        # Force authentication for customer tests
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
 
@@ -66,7 +66,11 @@ class OrderTests(APITestCase):
 class SMSServiceTests(TestCase):
     @patch('africastalking.SMS.send')
     def test_send_sms_success(self, mock_send):
-        mock_send.return_value = {'SMSMessageData': {'Recipients': [{'status': 'Success'}]}}
+        mock_send.return_value = {
+            'SMSMessageData': {
+                'Recipients': [{'status': 'Success'}]
+            }
+        }
         from api.services.sms import SMSService
         result = SMSService.send_order_notification('+254712345678', 'Test message')
         self.assertTrue(result)
