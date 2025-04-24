@@ -13,7 +13,7 @@ class CustomerTests(APITestCase):
             'name': 'Test Customer',
             'code': 'TEST123', 
             'email': 'test@example.com',
-            'phone': '+254712345678'
+            'phone': '+254742482543'
         }
         self.url = reverse('customer-list')
         # Force authentication for customer tests
