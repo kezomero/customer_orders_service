@@ -8,6 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.urls import reverse
 from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
+from rest_framework.views import APIView
 
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
@@ -45,6 +46,25 @@ class CustomLoginView(OIDCAuthenticationRequestView):
     def get(self, request, *args, **kwargs):
         self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
         return super().get(request, *args, **kwargs)
+    
+#Logout View
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Invalidate JWT refresh token
+            refresh_token = request.data.get("refresh_token")
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+
+            # Invalidate session (OIDC/Django session logout)
+            request.session.flush()
+
+            return Response({"message": "Logged out successfully."}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": "Invalid or expired token."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ViewSet for Customers
