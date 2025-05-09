@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Customer, Order
 import phonenumbers
 from phonenumbers.phonenumberutil import NumberParseException
+from rest_framework.exceptions import ValidationError
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,3 +37,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'customer', 'item', 'quantity', 'amount', 'payment_method', 'created_at']
         read_only_fields = ['created_at']
+
+    def to_internal_value(self, data):
+        validated_data = super().to_internal_value(data)
+
+        # Check if customer exists
+        customer_id = data.get('customer')
+        if customer_id:
+            try:
+                Customer.objects.get(pk=customer_id)
+            except Customer.DoesNotExist:
+                raise ValidationError({'customer': f'Customer with ID {customer_id} does not exist.'})
+
+        return validated_data
