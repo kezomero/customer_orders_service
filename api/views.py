@@ -18,17 +18,24 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         response = super().get(request, *args, **kwargs)
 
         user = request.user
-        
-        code_id = getattr(user, 'code_id', 'No code id available') 
-        
-        # Generate the tokens
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
-        
-        # Return the tokens in the response
+
+        # Customize user data returned in the response
+        user_data = {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            # Add custom fields like 'code_id' if needed
+            "code_id": getattr(user, "code_id", None),
+        }
+
         return JsonResponse({
-            'access_token': str(access_token),
-            'refresh_token': str(refresh),
+            "access_token": str(access_token),
+            "refresh_token": str(refresh),
+            "user": user_data,
         })
 
 # Custom Login View to initiate OIDC authentication and redirect to the callback URL
