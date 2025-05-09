@@ -4,7 +4,8 @@ from .views import (
     CustomerViewSet,
     OrderViewSet,
     CustomLoginView,
-    CustomOIDCAuthenticationCallbackView
+    CustomOIDCAuthenticationCallbackView,
+    LogoutView
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -16,6 +17,7 @@ urlpatterns = [
     path('', include(router.urls)),
     path('api/', include(router.urls)),
     path('oidc/login/', CustomLoginView.as_view(), name='oidc-login'),
+    path('api/logout/', LogoutView.as_view(), name='logout'),
     path('oidc/callback/', CustomOIDCAuthenticationCallbackView.as_view(), name='oidc_authentication_callback'),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
