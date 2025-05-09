@@ -53,6 +53,18 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        self.perform_create(serializer)
+        return Response({
+            'message': 'Order created successfully.',
+            'order': serializer.data
+        }, status=status.HTTP_201_CREATED)
+
     def perform_create(self, serializer):
         order = serializer.save()
         customer = order.customer
@@ -66,11 +78,5 @@ class OrderViewSet(viewsets.ModelViewSet):
             f"We’ll contact you shortly."
         )
 
-        print(f"Prepared SMS: {message}")
-
         success = SMSService.send_order_notification(customer.phone, message)
-
-        if success:
-            print(f"SMS sent successfully for Order #{order.id}")
-        else:
-            print(f"Failed to send SMS for Order #{order.id}")
+        print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
