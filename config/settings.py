@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import africastalking
+from datetime import timedelta
 
 load_dotenv()
 
@@ -136,6 +137,13 @@ OIDC_RP_SIGN_ALGO = 'RS256'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 OIDC_AUTHENTICATION_CALLBACK_URL_NAME = 'oidc_authentication_callback'
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Optional
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
 
 # Session management
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Better for OIDC flow
