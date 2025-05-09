@@ -12,6 +12,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.urls import reverse
 from django.http import JsonResponse
 from rest_framework import status
+from django.core.exceptions import ObjectDoesNotExist
 
 # OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
