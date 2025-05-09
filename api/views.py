@@ -59,26 +59,23 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
 
         if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            error_detail = serializer.errors
+
+            # Customize error for non-existent customer
+            customer_id = request.data.get('customer')
+            if 'customer' in error_detail and customer_id:
+                try:
+                    Customer.objects.get(pk=customer_id)
+                except Customer.DoesNotExist:
+                    return Response(
+                        {'error': f"Customer with ID {customer_id} does not exist."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            return Response({'error': error_detail}, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
         return Response({
             'message': 'Order created successfully.',
             'order': serializer.data
         }, status=status.HTTP_201_CREATED)
-
-    def perform_create(self, serializer):
-        order = serializer.save()
-        customer = order.customer
-        total_cost = order.amount * order.quantity
-
-        message = (
-            f"Dear {customer.name},\n"
-            f"Thank you for your order (#{order.id}) of {order.item} x{order.quantity}.\n"
-            f"Total: KES {total_cost:.2f}\n"
-            f"Payment Method: {order.payment_method}\n"
-            f"We’ll contact you shortly."
-        )
-
-        success = SMSService.send_order_notification(customer.phone, message)
-        print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
