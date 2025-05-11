@@ -119,6 +119,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
 
 # ViewSet for Orders
 class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
     def get_queryset(self):
@@ -126,55 +127,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         if customer_id:
             return Order.objects.filter(customer_id=customer_id)
         return Order.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-
-        if not serializer.is_valid():
-            customer_id = request.data.get('customer')
-            if 'customer' in serializer.errors and customer_id:
-                if not Customer.objects.filter(pk=customer_id).exists():
-                    return Response(
-                        {'error': f"Customer with ID {customer_id} does not exist."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-        self.perform_create(serializer)
-        return Response({
-            'message': 'Order created successfully.',
-            'order': serializer.data
-        }, status=status.HTTP_201_CREATED)
-
-    def update(self, request, *args, **kwargs):
-        try:
-            return super().update(request, *args, **kwargs)
-        except Order.DoesNotExist:
-            return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    def destroy(self, request, *args, **kwargs):
-        try:
-            return super().destroy(request, *args, **kwargs)
-        except Order.DoesNotExist:
-            return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    def perform_create(self, serializer):
-        order = serializer.save()
-        customer = order.customer
-        total_cost = order.amount * order.quantity
-
-        message = (
-            f"Dear {customer.name},\n"
-            f"Thank you for your order (#{order.id}) of {order.item} x{order.quantity}.\n"
-            f"Total: KES {total_cost:.2f}\n"
-            f"Payment Method: {order.payment_method}\n"
-            f"We’ll contact you shortly."
-        )
-
-        success = SMSService.send_order_notification(customer.phone, message)
-        print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
 
     def list(self, request, *args, **kwargs):
         orders = self.get_queryset()
@@ -207,28 +159,58 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         try:
-            return super().update(request, *args, **kwargs)
+            instance = self.get_object()
+            serializer = self.get_serializer(instance, data=request.data)
+            if serializer.is_valid():
+                self.perform_update(serializer)
+                self.send_sms(instance, action="updated")
+                return Response({'message': 'Order updated successfully.', 'order': serializer.data}, status=status.HTTP_200_OK)
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         except Order.DoesNotExist:
             return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     def destroy(self, request, *args, **kwargs):
         try:
-            return super().destroy(request, *args, **kwargs)
+            instance = self.get_object()
+            customer = instance.customer
+            order_id = instance.id
+            item = instance.item
+            self.perform_destroy(instance)
+
+            message = (
+                f"Dear {customer.name},\n"
+                f"Your order (#{order_id}) for {item} has been successfully cancelled."
+            )
+            SMSService.send_order_notification(customer.phone, message)
+            return Response({'message': 'Order deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Order.DoesNotExist:
             return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     def perform_create(self, serializer):
         order = serializer.save()
+        self.send_sms(order, action="created")
+
+    def send_sms(self, order, action):
         customer = order.customer
         total_cost = order.amount * order.quantity
 
-        message = (
-            f"Dear {customer.name},\n"
-            f"Thank you for your order (#{order.id}) of {order.item} x{order.quantity}.\n"
-            f"Total: KES {total_cost:.2f}\n"
-            f"Payment Method: {order.payment_method}\n"
-            f"We’ll contact you shortly."
-        )
+        if action == "created":
+            message = (
+                f"Dear {customer.name},\n"
+                f"Thank you for your order (#{order.id}) of {order.item} x{order.quantity}.\n"
+                f"Total: KES {total_cost:.2f}\n"
+                f"Payment Method: {order.payment_method}\n"
+                f"We’ll contact you shortly."
+            )
+        elif action == "updated":
+            message = (
+                f"Dear {customer.name},\n"
+                f"Your order (#{order.id}) has been updated to {order.item} x{order.quantity}.\n"
+                f"New Total: KES {total_cost:.2f}\n"
+                f"Payment Method: {order.payment_method}"
+            )
+        else:
+            return
 
         success = SMSService.send_order_notification(customer.phone, message)
         print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
