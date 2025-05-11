@@ -19,7 +19,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
-
 # OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
     def get(self, request, *args, **kwargs):
@@ -34,9 +33,9 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "code_id": getattr(user, "code_id", None),
+            # "first_name": user.first_name,
+            # "last_name": user.last_name,
+            # "code_id": getattr(user, "code_id", None),
         }
 
         return JsonResponse({
