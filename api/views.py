@@ -53,13 +53,12 @@ def logout_view(request):
     # Log out of Django
     django_logout(request)
 
-    # Build the Auth0 logout URL
+    # Build the OIDC provider logout URL
     params = {
-        'returnTo': request.build_absolute_uri('/oidc/login/'),
-        'client_id': settings.OIDC_RP_CLIENT_ID
+        'redirect_uri': request.build_absolute_uri('/api/oidc/login/') 
     }
     logout_url = f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
-    
+
     return redirect(logout_url)
 
 
