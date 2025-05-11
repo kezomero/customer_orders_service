@@ -116,6 +116,19 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
+    def list(self, request, *args, **kwargs):
+        orders = self.get_queryset()
+        serializer = self.get_serializer(orders, many=True)
+        return Response({'orders': serializer.data}, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            order = self.get_object()
+            serializer = self.get_serializer(order)
+            return Response({'order': serializer.data}, status=status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({'error': 'Order not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
 
@@ -125,18 +138,12 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if 'customer' in error_detail and customer_id:
                 if not Customer.objects.filter(pk=customer_id).exists():
-                    return Response(
-                        {'error': f"Customer with ID {customer_id} does not exist."},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return Response({'error': f"Customer with ID {customer_id} does not exist."}, status=status.HTTP_400_BAD_REQUEST)
 
             return Response({'error': error_detail}, status=status.HTTP_400_BAD_REQUEST)
 
         self.perform_create(serializer)
-        return Response({
-            'message': 'Order created successfully.',
-            'order': serializer.data
-        }, status=status.HTTP_201_CREATED)
+        return Response({'message': 'Order created successfully.', 'order': serializer.data}, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         try:
@@ -165,4 +172,3 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         success = SMSService.send_order_notification(customer.phone, message)
         print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
-
