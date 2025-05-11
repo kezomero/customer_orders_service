@@ -79,16 +79,25 @@ class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
+    def list(self, request, *args, **kwargs):
+        customers = self.get_queryset()
+        serializer = self.get_serializer(customers, many=True)
+        return Response({'customers': serializer.data}, status=status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        try:
+            customer = self.get_object()
+            serializer = self.get_serializer(customer)
+            return Response({'customer': serializer.data}, status=status.HTTP_200_OK)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        self.perform_create(serializer)
-        return Response({
-            'message': 'Customer created successfully.',
-            'customer': serializer.data
-        }, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response({'message': 'Customer created successfully.', 'customer': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
         try:
@@ -101,7 +110,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
             return super().destroy(request, *args, **kwargs)
         except Customer.DoesNotExist:
             return Response({'error': 'Customer not found.'}, status=status.HTTP_404_NOT_FOUND)
-
 
 # ViewSet for Orders
 class OrderViewSet(viewsets.ModelViewSet):
