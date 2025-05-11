@@ -8,7 +8,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.urls import reverse
 from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
-
+from django.contrib.auth import logout as django_logout
+from django.shortcuts import redirect
+from django.conf import settings
+from urllib.parse import urlencode
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
@@ -45,6 +48,19 @@ class CustomLoginView(OIDCAuthenticationRequestView):
     def get(self, request, *args, **kwargs):
         self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
         return super().get(request, *args, **kwargs)
+    
+def logout_view(request):
+    # Log out of Django
+    django_logout(request)
+
+    # Build the Auth0 logout URL
+    params = {
+        'returnTo': request.build_absolute_uri('/'),  # Where to redirect after logout
+        'client_id': settings.OIDC_RP_CLIENT_ID
+    }
+    logout_url = f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
+    
+    return redirect(logout_url)
 
 
 # ViewSet for Customers
@@ -130,3 +146,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         success = SMSService.send_order_notification(customer.phone, message)
         print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
+
