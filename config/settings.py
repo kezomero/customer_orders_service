@@ -146,6 +146,11 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+SIMPLE_JWT.update({
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': True,
+})
+
 # Session management
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Better for OIDC flow
 SESSION_COOKIE_NAME = 'customers_orders_sessionid'
