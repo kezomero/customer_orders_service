@@ -15,6 +15,9 @@ from urllib.parse import urlencode
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+
 
 
 # OIDC Callback View - Customizing token generation on successful login
@@ -51,11 +54,21 @@ class CustomLoginView(OIDCAuthenticationRequestView):
     
 def logout_view(request):
     # Log out of Django
+    user = request.user
+    if user.is_authenticated:
+        # Blacklist all refresh tokens for this user
+        tokens = OutstandingToken.objects.filter(user=user)
+        for token in tokens:
+            try:
+                BlacklistedToken.objects.get_or_create(token=token)
+            except Exception:
+                continue
+
     django_logout(request)
 
     # Build the OIDC provider logout URL
     params = {
-        'redirect_uri': request.build_absolute_uri('/api/oidc/login/') 
+        'redirect_uri': request.build_absolute_uri('/api/oidc/login/')
     }
     logout_url = f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
 
