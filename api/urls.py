@@ -4,7 +4,8 @@ from .views import (
     CustomerViewSet,
     OrderViewSet,
     CustomLoginView,
-    CustomOIDCAuthenticationCallbackView
+    CustomOIDCAuthenticationCallbackView,
+    logout_view
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
