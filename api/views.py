@@ -8,10 +8,15 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.urls import reverse
 from mozilla_django_oidc.views import OIDCAuthenticationRequestView, OIDCAuthenticationCallbackView
-
+from django.contrib.auth import logout as django_logout
+from django.shortcuts import redirect
+from django.conf import settings
+from urllib.parse import urlencode
 from .models import Customer, Order
 from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
 
 # OIDC Callback View - Customizing token generation on successful login
@@ -28,9 +33,9 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "code_id": getattr(user, "code_id", None),
+            # "first_name": user.first_name,
+            # "last_name": user.last_name,
+            # "code_id": getattr(user, "code_id", None),
         }
 
         return JsonResponse({
@@ -45,6 +50,28 @@ class CustomLoginView(OIDCAuthenticationRequestView):
     def get(self, request, *args, **kwargs):
         self.success_url = request.build_absolute_uri(reverse("oidc_authentication_callback"))
         return super().get(request, *args, **kwargs)
+    
+def logout_view(request):
+    # Log out of Django
+    user = request.user
+    if user.is_authenticated:
+        # Blacklist all refresh tokens for this user
+        tokens = OutstandingToken.objects.filter(user=user)
+        for token in tokens:
+            try:
+                BlacklistedToken.objects.get_or_create(token=token)
+            except Exception:
+                continue
+
+    django_logout(request)
+
+    # Build the OIDC provider logout URL
+    params = {
+        'redirect_uri': request.build_absolute_uri('/api/oidc/login/')
+    }
+    logout_url = f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
+
+    return redirect(logout_url)
 
 
 # ViewSet for Customers
@@ -130,3 +157,4 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         success = SMSService.send_order_notification(customer.phone, message)
         print(f"SMS {'sent' if success else 'failed'} for Order #{order.id}")
+

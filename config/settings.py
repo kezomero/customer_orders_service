@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'rest_framework_simplejwt',
     'mozilla_django_oidc',
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
 MIDDLEWARE = [
@@ -144,6 +145,11 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Optional
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+SIMPLE_JWT.update({
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': True,
+})
 
 # Session management
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'  # Better for OIDC flow
