@@ -55,7 +55,7 @@ def logout_view(request):
 
     # Build the Auth0 logout URL
     params = {
-        'returnTo': request.build_absolute_uri('/'),  # Where to redirect after logout
+        'returnTo': request.build_absolute_uri('/oidc/login/'),
         'client_id': settings.OIDC_RP_CLIENT_ID
     }
     logout_url = f"{settings.OIDC_OP_LOGOUT_ENDPOINT}?{urlencode(params)}"
