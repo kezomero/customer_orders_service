@@ -5,12 +5,17 @@ from rest_framework import status
 from .models import Customer, Order
 from unittest.mock import patch
 from django.contrib.auth.models import User
+
+# Optional for JWT token tests
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
+# -----------------------------
 # CUSTOMER TESTS
+# -----------------------------
 class CustomerTests(APITestCase):
     def setUp(self):
+        print("\nSetting up Customer test user and data...")
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
         self.customer_data = {
@@ -22,20 +27,26 @@ class CustomerTests(APITestCase):
         self.url = reverse('customer-list')
 
     def test_create_customer(self):
+        print("Testing customer creation...")
         response = self.client.post(self.url, self.customer_data)
+        print("Create response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 1)
 
     def test_list_customers(self):
         Customer.objects.create(**self.customer_data)
+        print("Testing listing customers...")
         response = self.client.get(self.url)
+        print("List response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['customers']), 1)
 
     def test_retrieve_customer(self):
         customer = Customer.objects.create(**self.customer_data)
         url = reverse('customer-detail', args=[customer.id])
+        print("Testing retrieving customer with ID:", customer.id)
         response = self.client.get(url)
+        print("Retrieve response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['customer']['name'], 'Test Customer')
 
@@ -44,25 +55,31 @@ class CustomerTests(APITestCase):
         url = reverse('customer-detail', args=[customer.id])
         updated_data = self.customer_data.copy()
         updated_data['name'] = 'Updated'
+        print("Testing updating customer...")
         response = self.client.put(url, updated_data)
+        print("Update response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['customer']['name'], 'Updated')
 
     def test_delete_customer(self):
         customer = Customer.objects.create(**self.customer_data)
         url = reverse('customer-detail', args=[customer.id])
+        print("Testing deleting customer...")
         response = self.client.delete(url)
+        print("Delete status code:", response.status_code)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Customer.objects.count(), 0)
 
+# -----------------------------
 # ORDER TESTS
+# -----------------------------
 class OrderTests(APITestCase):
     def setUp(self):
+        print("\nSetting up Order test user and data...")
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
         self.customer = Customer.objects.create(name='Test Customer', email='test@example.com', phone='+254712345678')
 
-        # Model-level data
         self.order_data_model = {
             'customer': self.customer,
             'item': 'Test Item',
@@ -71,7 +88,6 @@ class OrderTests(APITestCase):
             'payment_method': 'M-Pesa'
         }
 
-        # API-level data
         self.order_data_api = {
             'customer': self.customer.id,
             'item': 'Test Item',
@@ -80,26 +96,30 @@ class OrderTests(APITestCase):
             'payment_method': 'M-Pesa'
         }
 
-        # For tests to work without renaming all variables
         self.order_data = self.order_data_api
-
         self.url = reverse('order-list')
 
     def test_create_order(self):
+        print("Testing order creation...")
         response = self.client.post(self.url, self.order_data)
+        print("Create response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Order.objects.count(), 1)
 
     def test_list_orders(self):
         Order.objects.create(customer=self.customer, item='Item', amount=100, quantity=1, payment_method='Cash')
+        print("Testing listing orders...")
         response = self.client.get(self.url)
+        print("List response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['orders']), 1)
 
     def test_retrieve_order(self):
         order = Order.objects.create(**self.order_data_model)
         url = reverse('order-detail', args=[order.id])
+        print("Testing retrieving order with ID:", order.id)
         response = self.client.get(url)
+        print("Retrieve response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['order']['item'], 'Test Item')
 
@@ -109,7 +129,9 @@ class OrderTests(APITestCase):
         url = reverse('order-detail', args=[order.id])
         updated_data = self.order_data.copy()
         updated_data['quantity'] = 5
+        print("Testing updating order...")
         response = self.client.put(url, updated_data)
+        print("Update response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['order']['quantity'], 5)
         mock_sms.assert_called_once()
@@ -117,23 +139,31 @@ class OrderTests(APITestCase):
     def test_delete_order(self):
         order = Order.objects.create(**self.order_data_model)
         url = reverse('order-detail', args=[order.id])
+        print("Testing deleting order...")
         response = self.client.delete(url)
+        print("Delete status code:", response.status_code)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_invalid_customer_on_order(self):
         bad_data = self.order_data.copy()
         bad_data['customer'] = 9999
+        print("Testing order creation with invalid customer...")
         response = self.client.post(self.url, bad_data)
+        print("Invalid customer response:", response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_order_calculation(self):
+        print("Testing total cost calculation...")
         order = Order.objects.create(customer=self.customer, item='Test', amount=200, quantity=3)
         self.assertEqual(order.total_cost, 600)
 
+# -----------------------------
 # SMS SERVICE TESTS
+# -----------------------------
 class SMSServiceTests(TestCase):
     @patch('africastalking.SMS.send', create=True)
     def test_send_sms_success(self, mock_send):
+        print("Testing SMS sending (mocked)...")
         mock_send.return_value = {
             'SMSMessageData': {
                 'Recipients': [{'status': 'Success'}]
@@ -141,9 +171,11 @@ class SMSServiceTests(TestCase):
         }
         from api.services.sms import SMSService
         result = SMSService.send_order_notification('+254712345678', 'Hello')
+        print("SMS result:", result)
         self.assertTrue(result)
 
     def test_format_phone_number(self):
+        print("Testing phone number formatting...")
         from api.services.sms import SMSService
         cases = [
             ('0712345678', '+254712345678'),
@@ -152,4 +184,6 @@ class SMSServiceTests(TestCase):
             ('invalid', None)
         ]
         for raw, expected in cases:
-            self.assertEqual(SMSService._format_phone_number(raw), expected)
+            result = SMSService._format_phone_number(raw)
+            print(f"Raw: {raw}, Expected: {expected}, Got: {result}")
+            self.assertEqual(result, expected)
