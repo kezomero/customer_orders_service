@@ -62,13 +62,25 @@ class OrderTests(APITestCase):
         self.user = User.objects.create_user(username='testuser', password='testpass')
         self.client.force_authenticate(user=self.user)
         self.customer = Customer.objects.create(name='Test Customer', email='test@example.com', phone='+254712345678')
-        self.order_data = {
+
+        # Used for model-level tests
+        self.order_data_model = {
+            'customer': self.customer,
+            'item': 'Test Item',
+            'amount': 100,
+            'quantity': 2,
+            'payment_method': 'M-Pesa'
+        }
+
+        # Used for API tests
+        self.order_data_api = {
             'customer': self.customer.id,
             'item': 'Test Item',
             'amount': 100,
             'quantity': 2,
             'payment_method': 'M-Pesa'
         }
+
         self.url = reverse('order-list')
 
     def test_create_order(self):
