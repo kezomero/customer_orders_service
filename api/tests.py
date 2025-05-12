@@ -5,7 +5,6 @@ from rest_framework import status
 from .models import Customer, Order
 from unittest.mock import patch
 from django.contrib.auth.models import User
-from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
@@ -63,7 +62,7 @@ class OrderTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         self.customer = Customer.objects.create(name='Test Customer', email='test@example.com', phone='+254712345678')
 
-        # Used for model-level tests
+        # Model-level data
         self.order_data_model = {
             'customer': self.customer,
             'item': 'Test Item',
@@ -72,7 +71,7 @@ class OrderTests(APITestCase):
             'payment_method': 'M-Pesa'
         }
 
-        # Used for API tests
+        # API-level data
         self.order_data_api = {
             'customer': self.customer.id,
             'item': 'Test Item',
@@ -80,6 +79,9 @@ class OrderTests(APITestCase):
             'quantity': 2,
             'payment_method': 'M-Pesa'
         }
+
+        # For tests to work without renaming all variables
+        self.order_data = self.order_data_api
 
         self.url = reverse('order-list')
 
@@ -95,7 +97,7 @@ class OrderTests(APITestCase):
         self.assertEqual(len(response.data['orders']), 1)
 
     def test_retrieve_order(self):
-        order = Order.objects.create(**self.order_data)
+        order = Order.objects.create(**self.order_data_model)
         url = reverse('order-detail', args=[order.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -103,7 +105,7 @@ class OrderTests(APITestCase):
 
     @patch('api.services.sms.SMSService.send_order_notification')
     def test_update_order(self, mock_sms):
-        order = Order.objects.create(**self.order_data)
+        order = Order.objects.create(**self.order_data_model)
         url = reverse('order-detail', args=[order.id])
         updated_data = self.order_data.copy()
         updated_data['quantity'] = 5
@@ -113,7 +115,7 @@ class OrderTests(APITestCase):
         mock_sms.assert_called_once()
 
     def test_delete_order(self):
-        order = Order.objects.create(**self.order_data)
+        order = Order.objects.create(**self.order_data_model)
         url = reverse('order-detail', args=[order.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -151,4 +153,3 @@ class SMSServiceTests(TestCase):
         ]
         for raw, expected in cases:
             self.assertEqual(SMSService._format_phone_number(raw), expected)
-
