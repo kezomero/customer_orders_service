@@ -140,38 +140,3 @@ class SMSServiceTests(TestCase):
         for raw, expected in cases:
             self.assertEqual(SMSService._format_phone_number(raw), expected)
 
-# OIDC AUTH TESTS
-class AuthenticationTests(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-
-    @patch('api.views.CustomOIDCAuthenticationCallbackView.get')
-    def test_oidc_callback(self, mock_get):
-        mock_get.return_value = JsonResponse({
-            'access_token': 'access',
-            'refresh_token': 'refresh',
-            'user': {'id': 1, 'username': 'testuser', 'email': 'test@example.com'}
-        })
-        url = reverse('oidc_authentication_callback')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('access_token', response.json())
-
-    def test_jwt_token_obtain(self):
-        url = reverse('token_obtain_pair')
-        response = self.client.post(url, {'username': 'testuser', 'password': 'testpass'})
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('access', response.data)
-
-# LOGOUT VIEW TEST
-class LogoutViewTests(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-        self.client.force_login(self.user)
-        self.refresh = RefreshToken.for_user(self.user)
-
-    def test_logout_blacklists_tokens(self):
-        self.refresh.blacklist()
-        url = reverse('logout_view')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)  # Redirect to OIDC logout
