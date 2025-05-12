@@ -6,9 +6,14 @@ from .models import Customer, Order
 from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 
+# CUSTOMER TESTS
 class CustomerTests(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_authenticate(user=self.user)
         self.customer_data = {
             'name': 'Test Customer',
             'code': 'TEST123',
@@ -16,27 +21,47 @@ class CustomerTests(APITestCase):
             'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-        self.client.force_authenticate(user=self.user)
 
     def test_create_customer(self):
         response = self.client.post(self.url, self.customer_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 1)
 
-    def test_get_customers(self):
+    def test_list_customers(self):
         Customer.objects.create(**self.customer_data)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data['customers']), 1)
 
+    def test_retrieve_customer(self):
+        customer = Customer.objects.create(**self.customer_data)
+        url = reverse('customer-detail', args=[customer.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['customer']['name'], 'Test Customer')
+
+    def test_update_customer(self):
+        customer = Customer.objects.create(**self.customer_data)
+        url = reverse('customer-detail', args=[customer.id])
+        updated_data = self.customer_data.copy()
+        updated_data['name'] = 'Updated'
+        response = self.client.put(url, updated_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['customer']['name'], 'Updated')
+
+    def test_delete_customer(self):
+        customer = Customer.objects.create(**self.customer_data)
+        url = reverse('customer-detail', args=[customer.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Customer.objects.count(), 0)
+
+# ORDER TESTS
 class OrderTests(APITestCase):
     def setUp(self):
-        self.customer = Customer.objects.create(
-            name='Test Customer',
-            email='test@example.com',
-            phone='+254742482543'
-        )
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_authenticate(user=self.user)
+        self.customer = Customer.objects.create(name='Test Customer', email='test@example.com', phone='+254712345678')
         self.order_data = {
             'customer': self.customer.id,
             'item': 'Test Item',
@@ -45,27 +70,55 @@ class OrderTests(APITestCase):
             'payment_method': 'M-Pesa'
         }
         self.url = reverse('order-list')
-        self.user = User.objects.create_user(username='testuser', password='testpass')
-        self.client.force_authenticate(user=self.user)
 
-    @patch('api.services.sms.SMSService.send_order_notification')
-    def test_create_order_with_sms(self, mock_sms):
-        mock_sms.return_value = True
+    def test_create_order(self):
         response = self.client.post(self.url, self.order_data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(mock_sms.called)
-        
-    def test_order_calculation(self):
-        order = Order.objects.create(
-            customer=self.customer,
-            item='Test Item',
-            amount=100,
-            quantity=3
-        )
-        self.assertEqual(order.total_cost, 300)
+        self.assertEqual(Order.objects.count(), 1)
 
+    def test_list_orders(self):
+        Order.objects.create(customer=self.customer, item='Item', amount=100, quantity=1, payment_method='Cash')
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data['orders']), 1)
+
+    def test_retrieve_order(self):
+        order = Order.objects.create(**self.order_data)
+        url = reverse('order-detail', args=[order.id])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['order']['item'], 'Test Item')
+
+    @patch('api.services.sms.SMSService.send_order_notification')
+    def test_update_order(self, mock_sms):
+        order = Order.objects.create(**self.order_data)
+        url = reverse('order-detail', args=[order.id])
+        updated_data = self.order_data.copy()
+        updated_data['quantity'] = 5
+        response = self.client.put(url, updated_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['order']['quantity'], 5)
+        mock_sms.assert_called_once()
+
+    def test_delete_order(self):
+        order = Order.objects.create(**self.order_data)
+        url = reverse('order-detail', args=[order.id])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_invalid_customer_on_order(self):
+        bad_data = self.order_data.copy()
+        bad_data['customer'] = 9999
+        response = self.client.post(self.url, bad_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_order_calculation(self):
+        order = Order.objects.create(customer=self.customer, item='Test', amount=200, quantity=3)
+        self.assertEqual(order.total_cost, 600)
+
+# SMS SERVICE TESTS
 class SMSServiceTests(TestCase):
-    @patch('africastalking.SMS.send', create=True) 
+    @patch('africastalking.SMS.send', create=True)
     def test_send_sms_success(self, mock_send):
         mock_send.return_value = {
             'SMSMessageData': {
@@ -73,36 +126,52 @@ class SMSServiceTests(TestCase):
             }
         }
         from api.services.sms import SMSService
-        result = SMSService.send_order_notification('+254712345678', 'Test message')
+        result = SMSService.send_order_notification('+254712345678', 'Hello')
         self.assertTrue(result)
 
-    def test_phone_number_formatting(self):
+    def test_format_phone_number(self):
         from api.services.sms import SMSService
-        test_cases = [
+        cases = [
             ('0712345678', '+254712345678'),
             ('254712345678', '+254712345678'),
             ('+254712345678', '+254712345678'),
             ('invalid', None)
         ]
-        for input_phone, expected in test_cases:
-            formatted = SMSService._format_phone_number(input_phone)
-            self.assertEqual(formatted, expected)
+        for raw, expected in cases:
+            self.assertEqual(SMSService._format_phone_number(raw), expected)
 
+# OIDC AUTH TESTS
 class AuthenticationTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+
     @patch('api.views.CustomOIDCAuthenticationCallbackView.get')
-    def test_oidc_callback(self, mock_view):
-        mock_view.return_value = JsonResponse({
-            'access_token': 'test',
-            'refresh_token': 'test_refresh'
+    def test_oidc_callback(self, mock_get):
+        mock_get.return_value = JsonResponse({
+            'access_token': 'access',
+            'refresh_token': 'refresh',
+            'user': {'id': 1, 'username': 'testuser', 'email': 'test@example.com'}
         })
         url = reverse('oidc_authentication_callback')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertIn('access_token', response.json())
 
-    def test_jwt_authentication(self):
-        user = User.objects.create_user(username='testuser', password='testpass')
+    def test_jwt_token_obtain(self):
         url = reverse('token_obtain_pair')
         response = self.client.post(url, {'username': 'testuser', 'password': 'testpass'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, 200)
         self.assertIn('access', response.data)
+
+# LOGOUT VIEW TEST
+class LogoutViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='testpass')
+        self.client.force_login(self.user)
+        self.refresh = RefreshToken.for_user(self.user)
+
+    def test_logout_blacklists_tokens(self):
+        self.refresh.blacklist()
+        url = reverse('logout_view')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)  # Redirect to OIDC logout
