@@ -159,4 +159,4 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 OIDC_STATE_STORE = True  # Explicitly enable state storage
 OIDC_STORE_ACCESS_TOKEN = True  # Required for proper state handling
 OIDC_STORE_ID_TOKEN = True  # Required for JWT validation
-OIDC_RP_SCOPES = 'openid profile email'  # Required scopes
+OIDC_RP_SCOPES = 'openid email profile'  # Required scopes
