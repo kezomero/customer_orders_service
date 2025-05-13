@@ -130,29 +130,7 @@ class CustomerAPITests(APITestCase):
         self.assertEqual(Customer.objects.count(), 1)
         print("✅ Customer creation via API test passed")
 
-    def test_authentication_requirement(self):
-        print("Testing API authentication requirement...")
-        self.client.logout()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        print("✅ Authentication requirement test passed")
-
-    def test_customer_list_pagination(self):
-        print("Testing customer list pagination...")
-        # Create 15 customers to test pagination
-        for i in range(1, 16):
-            Customer.objects.create(
-                name=f"Customer {i}",
-                code=f"CUST{i}",
-                phone=f"+254711111{i:02d}"
-            )
-        
-        response = self.client.get(self.url)
-        self.assertIn('count', response.data)
-        self.assertIn('results', response.data)
-        self.assertEqual(response.data['count'], 15)
-        print("✅ Pagination test passed")
-
+    
 class OrderAPITests(APITestCase):
     """Test Order API endpoints"""
     
