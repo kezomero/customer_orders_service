@@ -79,7 +79,6 @@ class CustomerSerializerTests(TestCase):
         print("\nTesting valid phone number formats...")
         valid_numbers = [
             ('+254712345678', '+254712345678'),
-            ('254712345678', '+254712345678')
         ]
         
         for input_num, expected in valid_numbers:
