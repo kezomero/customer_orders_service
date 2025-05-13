@@ -280,7 +280,7 @@ class AdminInterfaceTests(TestCase):
 class SMSServiceTests(TestCase):
     """Test SMS service integration"""
     
-    @patch('africastalking.SMS.send')
+    @patch('api.services.africastalking.SMS.send')
     def test_successful_sms_delivery(self, mock_send):
         print("\nTesting successful SMS delivery...")
         mock_send.return_value = {
@@ -294,7 +294,7 @@ class SMSServiceTests(TestCase):
         self.assertTrue(result)
         print("✅ SMS success test passed")
 
-    @patch('africastalking.SMS.send')
+    @patch('api.services.africastalking.SMS.send')
     def test_failed_sms_delivery(self, mock_send):
         print("Testing failed SMS delivery...")
         mock_send.side_effect = Exception("API Error")
@@ -306,7 +306,7 @@ class SMSServiceTests(TestCase):
         self.assertFalse(result)
         print("✅ SMS failure test passed")
 
-    @patch('africastalking.SMS.send')
+    @patch('services.sms_service.sms.send')
     def test_sms_service_logging(self, mock_send):
         print("Testing SMS service error logging...")
         mock_send.side_effect = Exception("Rate limit exceeded")
