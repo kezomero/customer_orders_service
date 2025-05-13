@@ -25,14 +25,12 @@ logger = logging.getLogger(__name__)
 # OIDC Callback View - Customizing token generation on successful login
 class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
     def get(self, request, *args, **kwargs):
-        print("User:", request.user)
+        print("User:", request)
         print("Is Authenticated:", request.user.is_authenticated)
-        
+
         response = super().get(request, *args, **kwargs)
 
         user = request.user
-        logger.debug(user)
-        print(user)
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
 
