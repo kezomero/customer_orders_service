@@ -142,7 +142,7 @@ OIDC_AUTHENTICATION_CALLBACK_URL_NAME = 'oidc_authentication_callback'
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),  # Optional
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
