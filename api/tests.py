@@ -1,3 +1,4 @@
+# tests.py
 import logging
 from django.test import TestCase
 from django.urls import reverse
@@ -9,7 +10,6 @@ from django.contrib.auth.models import User
 from django.contrib.admin.sites import AdminSite
 from .admin import CustomerAdmin, OrderAdmin
 from api.services.sms import SMSService
-from rest_framework import serializers
 from .serializers import CustomerSerializer
 
 logger = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ class CustomerAPITests(APITestCase):
         self.customer_data = {
             'name': 'API Customer',
             'code': 'API123',
-            'phone': '+254712345678'
+            'phone': '0712345678'
         }
         self.url = reverse('customer-list')
 
@@ -140,6 +140,13 @@ class CustomerAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 1)
         print("✅ Customer creation via API test passed")
+
+    def test_authentication_requirement(self):
+        print("Testing API authentication requirement...")
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        print("✅ Authentication requirement test passed")
 
     def test_customer_list_pagination(self):
         print("Testing customer list pagination...")
@@ -286,6 +293,21 @@ class SMSServiceTests(TestCase):
         )
         self.assertTrue(result)
         print("✅ SMS success test passed")
+
+    @patch('africastalking.SMS.send')
+    def test_failed_sms_delivery(self, mock_send):
+        print("Testing failed SMS delivery...")
+        mock_send.side_effect = Exception("API Error")
+        
+        result = SMSService.send_order_notification(
+            '+254712345678',
+            'Test message'
+        )
+        self.assertFalse(result)
+        print("✅ SMS failure test passed")
+
+    @patch('africastalking.SMS.send')
+    def test_sms_service_logging(self, mock_send):
         print("Testing SMS service error logging...")
         mock_send.side_effect = Exception("Rate limit exceeded")
         
