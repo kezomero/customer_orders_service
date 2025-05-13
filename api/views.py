@@ -32,10 +32,6 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
         
-        print("Username:", user.username)
-        print("Email:", user.email)
-        print("First name:", user.first_name)
-        print("Last name:", user.last_name)
         user_data = {
             "id": user.id,
             "username": user.username,
