@@ -29,27 +29,32 @@ class CustomerModelTests(TestCase):
         customer = Customer.objects.get(code="FULL123")
         self.assertEqual(customer.location, "Nairobi")
         print("✅ Customer field persistence test passed")
-        
+
 class OrderModelTests(TestCase):
+    def setUp(self):
+        self.customer = Customer.objects.create(name="Test Customer", code="TEST123")
+
     def test_order_string_representation(self):
-        customer = Customer.objects.create(name="Test Customer", code="TEST123")
+        print("\nTesting Order model string representation...")
         order = Order.objects.create(
-            customer=customer,
+            customer=self.customer,
             item="Test Item",
             quantity=2,
             amount=100
         )
         self.assertEqual(str(order), f"Order #{order.id} - Test Item x2")
+        print("✅ Order string representation test passed")
 
     def test_total_cost_property(self):
-        customer = Customer.objects.create(name="Test Customer", code="TEST123")
+        print("\nTesting Order total cost calculation...")
         order = Order.objects.create(
-            customer=customer,
+            customer=self.customer,
             item="Test Item",
             quantity=3,
             amount=150
         )
         self.assertEqual(order.total_cost, 450)
+        print("✅ Order total cost calculation test passed")
 
 class CustomerSerializer(serializers.Serializer):
     name = serializers.CharField()
