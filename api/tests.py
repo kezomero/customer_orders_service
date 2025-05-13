@@ -119,10 +119,10 @@ class CustomerAPITests(APITestCase):
     def test_create_customer(self):
         print("Testing customer creation via API...")
         response = self.client.post(self.url, self.customer_data)
+        print("Response Content:", response.content)  # Print the response content for debugging
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 1)
         print("✅ Customer creation via API test passed")
-
     
 class OrderAPITests(APITestCase):
     """Test Order API endpoints"""
