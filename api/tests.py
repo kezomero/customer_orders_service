@@ -1,4 +1,3 @@
-# api/tests.py
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
@@ -13,10 +12,13 @@ from rest_framework import serializers
 
 class CustomerModelTests(TestCase):
     def test_customer_string_representation(self):
+        print("\nTesting Customer model string representation...")
         customer = Customer(name="Test Customer", code="TEST123")
         self.assertEqual(str(customer), "Test Customer (TEST123)")
+        print("✅ Customer string representation test passed")
 
     def test_customer_model_fields(self):
+        print("\nTesting Customer model field persistence...")
         Customer.objects.create(
             name="Full Fields",
             code="FULL123",
@@ -26,27 +28,33 @@ class CustomerModelTests(TestCase):
         )
         customer = Customer.objects.get(code="FULL123")
         self.assertEqual(customer.location, "Nairobi")
+        print("✅ Customer field persistence test passed")
 
 class OrderModelTests(TestCase):
+    def setUp(self):
+        self.customer = Customer.objects.create(name="Test Customer", code="TEST123")
+
     def test_order_string_representation(self):
-        customer = Customer.objects.create(name="Test Customer", code="TEST123")
+        print("\nTesting Order model string representation...")
         order = Order.objects.create(
-            customer=customer,
+            customer=self.customer,
             item="Test Item",
             quantity=2,
             amount=100
         )
         self.assertEqual(str(order), f"Order #{order.id} - Test Item x2")
+        print("✅ Order string representation test passed")
 
     def test_total_cost_property(self):
-        customer = Customer.objects.create(name="Test Customer", code="TEST123")
+        print("\nTesting Order total cost calculation...")
         order = Order.objects.create(
-            customer=customer,
+            customer=self.customer,
             item="Test Item",
             quantity=3,
             amount=150
         )
         self.assertEqual(order.total_cost, 450)
+        print("✅ Order total cost calculation test passed")
 
 class CustomerSerializer(serializers.Serializer):
     name = serializers.CharField()
@@ -59,6 +67,7 @@ class CustomerSerializer(serializers.Serializer):
         if value.startswith('+254') and len(value) == 13:
             return value
         raise serializers.ValidationError("Invalid phone number format.")
+    
 class CustomerAdminTests(TestCase):
     def setUp(self):
         self.site = AdminSite()
@@ -199,6 +208,17 @@ class OrderTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 class SMSServiceTests(TestCase):
+    @patch('africastalking.SMS.send', create=True)
+    def test_send_sms_success(self, mock_send):
+        print("\nTesting SMS service successful delivery...")
+        mock_send.return_value = {
+            'SMSMessageData': {
+                'Recipients': [{'status': 'Success'}]
+            }
+        }
+        result = SMSService.send_order_notification('0712345678', 'Test message')
+        self.assertTrue(result)
+        print("✅ SMS service success test passed")
     @patch('africastalking.SMS.send', create=True)
     def test_send_sms_success(self, mock_send):
         mock_send.return_value = {
