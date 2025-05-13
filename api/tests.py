@@ -210,6 +210,17 @@ class OrderTests(APITestCase):
 class SMSServiceTests(TestCase):
     @patch('africastalking.SMS.send', create=True)
     def test_send_sms_success(self, mock_send):
+        print("\nTesting SMS service successful delivery...")
+        mock_send.return_value = {
+            'SMSMessageData': {
+                'Recipients': [{'status': 'Success'}]
+            }
+        }
+        result = SMSService.send_order_notification('0712345678', 'Test message')
+        self.assertTrue(result)
+        print("✅ SMS service success test passed")
+    @patch('africastalking.SMS.send', create=True)
+    def test_send_sms_success(self, mock_send):
         mock_send.return_value = {
             'SMSMessageData': {
                 'Recipients': [{'status': 'Success'}]
