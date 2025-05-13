@@ -267,22 +267,32 @@ class SMSServiceTests(TestCase):
     @patch('api.services.sms.africastalking.SMS.send')
     def test_failed_sms_delivery(self, mock_send):
         print("Testing failed SMS delivery...")
+        
+        # Simulate an exception when the SMS service is called
         mock_send.side_effect = Exception("API Error")
         
+        # Call the send_order_notification method
         result = SMSService.send_order_notification(
             '+254712345678',
             'Test message'
         )
+        
+        # Assert that the result is False, as the exception should be caught
         self.assertFalse(result)
+        
         print("✅ SMS failure test passed")
 
     @patch('api.services.sms.africastalking.SMS.send')
     def test_sms_service_logging(self, mock_send):
         print("Testing SMS service error logging...")
+
+        # Simulate an exception when the SMS service is called
         mock_send.side_effect = Exception("Rate limit exceeded")
 
+        # Capture logs during the execution
         with self.assertLogs('api.services.sms', level='ERROR') as cm:
             SMSService.send_order_notification('0712345678', 'Test message')
 
+        # Verify that the expected error message was logged
         self.assertIn("Rate limit exceeded", cm.output[0])
         print("✅ SMS logging test passed")
