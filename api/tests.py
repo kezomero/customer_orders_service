@@ -112,14 +112,13 @@ class CustomerAPITests(APITestCase):
         self.customer_data = {
             'name': 'API Customer',
             'code': 'API123',
-            'phone': '0712345678'
+            'phone': '+254712345678'
         }
         self.url = reverse('customer-list')
 
     def test_create_customer(self):
         print("Testing customer creation via API...")
         response = self.client.post(self.url, self.customer_data)
-        print("Response Content:", response.content)  # Print the response content for debugging
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Customer.objects.count(), 1)
         print("✅ Customer creation via API test passed")
