@@ -12,10 +12,13 @@ from rest_framework import serializers
 
 class CustomerModelTests(TestCase):
     def test_customer_string_representation(self):
+        print("\nTesting Customer model string representation...")
         customer = Customer(name="Test Customer", code="TEST123")
         self.assertEqual(str(customer), "Test Customer (TEST123)")
+        print("✅ Customer string representation test passed")
 
     def test_customer_model_fields(self):
+        print("\nTesting Customer model field persistence...")
         Customer.objects.create(
             name="Full Fields",
             code="FULL123",
@@ -25,7 +28,8 @@ class CustomerModelTests(TestCase):
         )
         customer = Customer.objects.get(code="FULL123")
         self.assertEqual(customer.location, "Nairobi")
-
+        print("✅ Customer field persistence test passed")
+        
 class OrderModelTests(TestCase):
     def test_order_string_representation(self):
         customer = Customer.objects.create(name="Test Customer", code="TEST123")
@@ -58,6 +62,7 @@ class CustomerSerializer(serializers.Serializer):
         if value.startswith('+254') and len(value) == 13:
             return value
         raise serializers.ValidationError("Invalid phone number format.")
+    
 class CustomerAdminTests(TestCase):
     def setUp(self):
         self.site = AdminSite()
