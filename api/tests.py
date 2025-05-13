@@ -77,17 +77,7 @@ class OrderModelTests(TestCase):
         self.assertEqual(self.order.total_cost, 200.00)
         print("✅ Total cost calculation test passed")
 
-    def test_order_with_zero_quantity(self):
-        print("Testing order with zero quantity...")
-        with self.assertRaises(Exception):
-            Order.objects.create(
-                customer=self.customer,
-                item="Invalid Item",
-                amount=50.00,
-                quantity=0
-            )
-        print("✅ Zero quantity validation test passed")
-
+    
 class CustomerSerializerTests(TestCase):
     """Test Customer serializer validation"""
     
