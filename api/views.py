@@ -17,6 +17,9 @@ from .serializers import CustomerSerializer, OrderSerializer
 from .services.sms import SMSService
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # OIDC Callback View - Customizing token generation on successful login
@@ -33,7 +36,6 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
             "id": user.id,
             "username": user.username,
             "email": user.email,
-            "name": user.name,
             # "first_name": user.first_name,
             # "last_name": user.last_name,
             # "code_id": getattr(user, "code_id", None),
