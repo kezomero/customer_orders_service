@@ -28,12 +28,12 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
 
         response = super().get(request, *args, **kwargs)
         
-        print("User:", response)
-        print("Is Authenticated:", request.user.is_authenticated)
-
         user = request.user
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
+        
+        print("User:", user)
+        print("Is Authenticated:", request.user.is_authenticated)
 
         user_data = {
             "id": user.id,
