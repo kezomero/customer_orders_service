@@ -28,6 +28,7 @@ class CustomOIDCAuthenticationCallbackView(OIDCAuthenticationCallbackView):
         response = super().get(request, *args, **kwargs)
 
         user = request.user
+        logger.debug(user)
         print(user)
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
