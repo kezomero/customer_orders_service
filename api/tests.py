@@ -299,8 +299,9 @@ class SMSServiceTests(TestCase):
     def test_sms_service_logging(self, mock_send):
         print("Testing SMS service error logging...")
         mock_send.side_effect = Exception("Rate limit exceeded")
-        
-        with self.assertLogs(logger, level='ERROR') as cm:
+
+        with self.assertLogs('api.services.sms', level='ERROR') as cm:
             SMSService.send_order_notification('0712345678', 'Test message')
-            self.assertIn("Rate limit exceeded", cm.output[0])
+
+        self.assertIn("Rate limit exceeded", cm.output[0])
         print("✅ SMS logging test passed")
