@@ -11,7 +11,7 @@ class Customer(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'customers'  # Custom table name
+        db_table = 'customers'
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -30,7 +30,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'orders'  # Custom table name
+        db_table = 'orders'
         
     @property
     def total_cost(self):
